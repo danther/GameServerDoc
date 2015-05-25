@@ -1,90 +1,38 @@
-#!/usr/bin/env node
+'use strict';
 
-/**
- * Module dependencies.
- */
-
-var app = require('../app');
-var debug = require('debug')('GameServerDoc:server');
+var app = require('connect')();
 var http = require('http');
+var swaggerTools = require('swagger-tools');
 
-/**
- * Get port from environment and store in Express.
- */
+var serverPort = 80;
 
-var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+// swaggerRouter configuration
+var options = {
+  swaggerUi: '/swagger.json',
+  controllers: './controllers',
+  useStubs: process.env.NODE_ENV === 'development' ? true : false // Conditionally turn on stubs (mock mode)
+};
 
-/**
- * Create HTTP server.
- */
+// The Swagger document (require it, build it programmatically, fetch it from a URL, ...)
+var swaggerDoc = require('./../api/swagger.json');
 
-var server = http.createServer(app);
+// Initialize the Swagger middleware
+swaggerTools.initializeMiddleware(swaggerDoc, function (middleware) {
+  // Interpret Swagger resources and attach metadata to request - must be first in swagger-tools middleware chain
+  app.use(middleware.swaggerMetadata());
 
-/**
- * Listen on provided port, on all network interfaces.
- */
+  // Validate Swagger requests
+  app.use(middleware.swaggerValidator());
 
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+  // Route validated requests to appropriate controller
+  app.use(middleware.swaggerRouter(options));
 
-/**
- * Normalize a port into a number, string, or false.
- */
+  // Serve the Swagger documents and Swagger UI
+  app.use(middleware.swaggerUi());
 
-function normalizePort(val) {
-  var port = parseInt(val, 10);
-
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
-
-  if (port >= 0) {
-    // port number
-    return port;
-  }
-
-  return false;
-}
-
-/**
- * Event listener for HTTP server "error" event.
- */
-
-function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
-
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
-
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
-}
-
-/**
- * Event listener for HTTP server "listening" event.
- */
-
-function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
-}
+  // Start the server
+  http.createServer(app).listen(80, function () {
+    console.log('Your server is listening on port %d (http://game05daddoc.azurewebsites.net:%d)', 80, 80);
+    console.log('Swagger-ui is available on http://game05daddoc.azurewebsites.net:%d/docs', 80);
+  });
+});
