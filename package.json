@@ -2,7 +2,7 @@
   "name": "",
   "version": "1.0.0",
   "description": "Documentation for our game server&#39;s create match service",
-  "main": "index.js",
+  "main": "bin/www",
   "keywords": [
     "swagger"
   ],
